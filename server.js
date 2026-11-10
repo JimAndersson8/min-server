@@ -1,10 +1,18 @@
 import express from "express";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
+
 const port = 3001;
 
 app.get("/hej", (req, res) => {
-  res.send("Hej från min server!");
+  res.json({
+    meddelande: "Hej från min server!",
+    namn: "Jim",
+    roll: "Webbutvecklare",
+    intressen: ["React", "JavaScript", "bygga webbsidor"],
+  });
 });
 
 app.get("/hej/:Jim", (req, res) => {
