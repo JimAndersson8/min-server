@@ -5,6 +5,12 @@ import { projekt } from "./projekt.js";
 const app = express();
 app.use(cors());
 
+// Logger-middleware körs före routes och skriver ut varje inkommande anrop.
+app.use((req, res, next) => {
+  console.log(new Date().toLocaleTimeString("sv-SE"), req.method, req.url);
+  next();
+});
+
 const port = 3001;
 
 app.get("/hej", (req, res) => {
@@ -30,6 +36,20 @@ app.get("/om", (req, res) => {
 
 app.get("/projekt", (req, res) => {
   res.json(projekt);
+});
+
+// DELETE tar bort projektet ur listan som ligger i serverns minne.
+app.delete("/projekt/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const index = projekt.findIndex((p) => p.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ fel: "Projektet finns inte" });
+  }
+
+  projekt.splice(index, 1);
+  // 204 betyder att borttagningen lyckades och inget svarsinnehåll behövs.
+  res.status(204).end();
 });
 
 app.get("/projekt/teknik/:namn", (req, res) => {
