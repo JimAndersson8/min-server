@@ -5,6 +5,10 @@ import { projekt } from "./projekt.js";
 const app = express();
 app.use(cors());
 
+// express.json() läser JSON-kroppen i POST-anrop och lägger den i req.body.
+// Måste ligga före routsen, annars är req.body undefined.
+app.use(express.json());
+
 // Logger-middleware körs före routes och skriver ut varje inkommande anrop.
 app.use((req, res, next) => {
   console.log(new Date().toLocaleTimeString("sv-SE"), req.method, req.url);
@@ -12,6 +16,9 @@ app.use((req, res, next) => {
 });
 
 const port = 3001;
+
+// Meddelandena sparas i serverns minne. Listan töms när servern startas om.
+const meddelanden = [];
 
 app.get("/hej", (req, res) => {
   res.json({
@@ -74,6 +81,35 @@ app.get("/projekt/:id", (req, res) => {
 
 app.get("/statistik", (req, res) => {
   res.json({ antal: projekt.length });
+});
+
+// POST /kontakt tar emot formuläret från React och sparar meddelandet.
+app.post("/kontakt", (req, res) => {
+  // ?? {} skyddar mot anrop utan JSON-kropp, så destructuring inte kraschar.
+  const { namn, email, text } = req.body ?? {};
+
+  // Servern validerar namn och text. E-post är frivillig i den här uppgiften.
+  if (
+    typeof namn !== "string" ||
+    !namn.trim() ||
+    typeof text !== "string" ||
+    !text.trim()
+  ) {
+    return res.status(400).json({ fel: "Namn och text måste fyllas i" });
+  }
+
+  const meddelande = { namn, email, text };
+  meddelanden.push(meddelande);
+
+  console.log("Nytt meddelande från", namn);
+
+  // 201 betyder att något nytt skapades på servern.
+  res.status(201).json({ meddelande: `Tack för ditt meddelande ${namn}!` });
+});
+
+// GET /kontakt listar alla sparade meddelanden.
+app.get("/kontakt", (req, res) => {
+  res.json(meddelanden);
 });
 
 app.listen(port, () => {
